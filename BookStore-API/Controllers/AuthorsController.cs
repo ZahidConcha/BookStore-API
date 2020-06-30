@@ -7,6 +7,7 @@ using AutoMapper;
 using BookStore_API.Contracts;
 using BookStore_API.DTOs;
 using BookStore_API.Modals;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,6 +17,7 @@ namespace BookStore_API.Controllers
     /// EndPoint Used to intereact with the author in the book stores database
     /// </summary>
     [Route("api/[controller]")]
+    [Authorize]
     [ApiController]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public class AuthorsController : ControllerBase
@@ -94,6 +96,7 @@ namespace BookStore_API.Controllers
         /// <param name="authorDTO"></param>
         /// <returns></returns>
         [HttpPost]
+        [Authorize (Roles = "Administrator")]
         [ProducesResponseType(StatusCodes.Status201Created)]
         public async Task<IActionResult> CreatePost([FromBody] AuthorCreateDTO authorDTO)
         {
@@ -131,12 +134,13 @@ namespace BookStore_API.Controllers
 
 
         /// <summary>
-        /// 
+        /// UPDATES an author
         /// </summary>
         /// <param name="id"></param>
         /// <param name="authorDTO"></param>
         /// <returns></returns>
         [HttpPut("{id}")]
+        [Authorize(Roles = "Administrator")]
         [ProducesResponseType(StatusCodes.Status201Created)]
         public async Task<IActionResult> UpdatePut(int id ,[FromBody] AuthorUpdateDTO authorDTO)
         {
@@ -173,6 +177,7 @@ namespace BookStore_API.Controllers
 
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Administrator")]
         [ProducesResponseType(StatusCodes.Status201Created)]
         public async Task<IActionResult> Delete(int id)
         {

@@ -6,6 +6,7 @@ using AutoMapper;
 using BookStore_API.Contracts;
 using BookStore_API.DTOs;
 using BookStore_API.Modals;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,6 +16,7 @@ namespace BookStore_API.Controllers
     /// Interacts whit the books table! 
     /// </summary>
     [Route("api/[controller]")]
+    [Authorize]
     [ApiController]
     public class BooksController : ControllerBase
     {
@@ -89,6 +91,7 @@ namespace BookStore_API.Controllers
         /// <param name="bookDTO"></param>
         /// <returns></returns>
         [HttpPost]
+        [Authorize(Roles = "Administrator")]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -128,6 +131,7 @@ namespace BookStore_API.Controllers
         /// <param name="bookDTO"></param>
         /// <returns></returns>
         [HttpPut("{id}")]
+        [Authorize(Roles = "Administrator")]
         [ProducesResponseType(StatusCodes.Status201Created)]
         public async Task<IActionResult> UpdatePut(int id, [FromBody] BookUpdateDTO bookDTO)
         {
@@ -161,9 +165,8 @@ namespace BookStore_API.Controllers
             }
         }
 
-
-
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Administrator")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status201Created)]
