@@ -36,6 +36,45 @@ namespace BookStore_API.Controllers
             configuration = _configuration;
         }
 
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="userDTO"></param>
+        /// <returns></returns>
+        [Route("register")]
+        [HttpPost]
+        public async Task<IActionResult> Register([FromBody] UserDTO userDTO)
+        {
+            var location = GetControllerActionNames();
+            try
+            {
+                var username = userDTO.EmailAddress;
+                var password = userDTO.Password;
+                logger.LogInfo($"{location}:Register Attempt From User {username}");
+                var user = new IdentityUser
+                {
+                    Email = username,
+                    UserName = username
+                };
+                var result = await userManeger.CreateAsync(user, password);
+
+                if (!result.Succeeded)
+                {
+                    foreach (var error in result.Errors)
+                    {
+                        logger.LogError($"{location}:User Registration Failed {error.Code} - {error.Description}");
+                    }
+                    return internalError(($"{location}:Register Attempt From User {username}  failed"));
+                }
+                return Ok(new { result.Succeeded });
+            }
+            catch (Exception e)
+            {
+                return internalError($"{e.Message}-{e.InnerException}");
+            }
+
+        }
         
 
 
@@ -44,6 +83,7 @@ namespace BookStore_API.Controllers
         /// </summary>
         /// <param name="userDTO"></param>
         /// <returns></returns>
+        [Route("login")]
         [AllowAnonymous]
         [HttpPost]
         public async Task<IActionResult> Login([FromBody] UserDTO userDTO)
@@ -51,8 +91,8 @@ namespace BookStore_API.Controllers
             var location = GetControllerActionNames();
             try
             {
-               
-                var userName = userDTO.UserName;
+
+                var userName = userDTO.EmailAddress;
                 var password = userDTO.Password;
                 logger.LogInfo($"{location}:Login Attempt From User {userName}");
                var result = await signInManeger.PasswordSignInAsync(userName, password, false, false);
@@ -99,7 +139,7 @@ namespace BookStore_API.Controllers
 
         private string GetControllerActionNames()
         {
-            var controller = ControllerContext.ActionDescriptor.ActionName;
+            var controller = ControllerContext.ActionDescriptor.ControllerName;
             var action = ControllerContext.ActionDescriptor.ActionName;
 
             return $"{controller} - {action}";
