@@ -1,0 +1,66 @@
+﻿@page "/authors/"
+@inject NavigationManager navManeger
+@inject IAuthorRepository AuthorRepo
+
+@if (Model == null)
+{
+    <LodingMessage Message="Loding Data"></LodingMessage>
+}
+else
+{
+<AuthorizeView Roles="Administrator">
+    <a href="/authors/create" class="btn btn-primary">Create Author <span class="oi oi-plus"></span></a>
+</AuthorizeView>
+    <a href="/authors/create" class="btn btn-primary">Create Author <span class="oi oi-plus"></span></a>
+    if (Model.Count < 1)
+    {
+        <LodingMessage Message="No Authors Sotored!"></LodingMessage>
+    }
+    else
+    {
+        <table class="table table-responsive">
+            <thead>
+                <tr>
+                    <th>Fist Name</th>
+                    <th>Last Name</th>
+                    <th>Actions</th>
+
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var author in Model)
+                {
+                    <tr>
+                        <td>@author.Fistname</td>
+                        <td>@author.Lastname</td>
+                        <td>
+                            <a href="/authors/view/@author.Id" class="btn btn-primary"><span class="oi oi-book"></span></a>
+                            
+                            
+                            <AuthorizeView Roles="Administrator">
+                                <a href="/authors/edit/@author.Id" class="btn btn-warning"><span class="oi oi-pencil"></span></a>
+                                <a href="/authors/delete/@author.Id" class="btn btn-danger"><span class="oi oi-delete"></span></a>
+                            </AuthorizeView>
+                           
+                            
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+
+}
+
+@code {
+
+    private IList<Author> Model;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Model = await AuthorRepo.Get(EndPoints.AuthorsEndPoint);
+    }
+
+
+}

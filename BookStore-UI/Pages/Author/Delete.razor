@@ -1,0 +1,95 @@
+﻿@page "/authors/delete/{Id}"
+@attribute [Authorize(Roles = "Administrator")]
+@inject IAuthorRepository authRepo
+@inject NavigationManager navManeger
+
+
+
+<h4>Are you sure you want to delete?</h4>
+@if (isFailed)
+{
+    <ErrorMessage message="Cant delete this fieled!"></ErrorMessage>
+}
+@if (Model == null)
+{
+    <LodingMessage Message="Loding Data"></LodingMessage>
+}
+else
+{
+    <div class="">
+        <h4>Author Details</h4>
+        <table class="table table-responsive">
+            <tr>
+                <td>Fist Name</td>
+                <td>@Model.Fistname</td>
+            </tr>
+            <tr>
+                <td>Last Name</td>
+                <td>@Model.Lastname</td>
+            </tr>
+            <tr>
+                <td>Biography</td>
+                <td>@Model.Bio</td>
+            </tr>
+        </table>
+
+        @if (Model.ListBooks == null || Model.ListBooks.Count < 1)
+        {
+            <div class="alert alert-dismissible alert-secondary">
+                Loading Data...
+            </div>
+        }
+        else
+        {
+            <div class="card" style="width: 18rem;">
+                <div class="card-header">
+                    <h4>Authors Books</h4>
+                </div>
+                <ul class="list-group list-group-flush">
+                    @foreach (var book in Model.ListBooks)
+                    {
+                        <li class="list-group-item">@book.Title - @book.Price</li>
+                    }
+                </ul>
+            </div>
+        }
+
+    </div>
+}
+<button @onclick="BackList"> Back to List</button>
+<button @onclick="DeleteAuthor"> Delete</button>
+
+
+@code {
+    [Parameter] public string Id { get; set; }
+    private Author Model = new Author();
+    private bool isFailed = false;
+
+    protected async override Task OnInitializedAsync()
+    {
+        int id = Convert.ToInt32(Id);
+        Model = await authRepo.Get(EndPoints.AuthorsEndPoint, id);
+    }
+
+    private void BackList()
+    {
+        navManeger.NavigateTo("/authors/");
+    }
+
+    private async Task DeleteAuthor()
+    {
+        bool isSucces = await authRepo.Delete(EndPoints.AuthorsEndPoint, Model.Id);
+        if (isSucces)
+        {
+            BackList();
+        }
+        else
+        {
+            isFailed = true;
+        }
+    }
+}
+
+@code {
+
+}

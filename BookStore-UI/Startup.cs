@@ -38,6 +38,7 @@ namespace BookStore_UI
             services.AddHttpClient();
             services.AddScoped<ApiAuthenticationStateProvider>();
             services.AddScoped<AuthenticationStateProvider>(p => p.GetRequiredService<ApiAuthenticationStateProvider>());
+            services.AddTransient<IAuthorRepository, AuthorRepository>();
             services.AddTransient<IAutenticationRepository, AutenticationRepository>();
         }
 

@@ -1,0 +1,56 @@
+﻿@page "/authors/create"
+@attribute [Authorize(Roles = "Administrator")]
+@inject IAuthorRepository authRepo
+@inject NavigationManager navManeger
+@if (!isSucces)
+{
+    <ErrorMessage message="Something went wrong with the creation!" />
+}
+
+
+<EditForm Model="model" OnValidSubmit="CreateAuthor">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    <div class=" form-group">
+        <lable for="fistname">Fist Name</lable>
+        <InputText @bind-Value="model.Fistname" class="form-control" id="fistname"></InputText>
+    </div>
+    <div class=" form-group">
+        <lable for="lastname">Last Name</lable>
+        <InputText @bind-Value="model.Lastname" class="form-control" id="lastname"></InputText>
+    </div>
+    <div class=" form-group">
+        <lable for="bio">Biography</lable>
+        <InputTextArea @bind-Value="model.Bio" class="form-control" id="bio"></InputTextArea>
+    </div>
+    <button class="btn btn-primary" type="submit">Edit Author</button>
+
+
+</EditForm>
+
+
+
+
+
+@code {
+
+    private Author model = new Author();
+    private bool isSucces = true;
+
+
+
+    private async Task CreateAuthor()
+    {
+        isSucces = await authRepo.Create(EndPoints.AuthorsEndPoint, model);
+        if (isSucces)
+        {
+            BackList();
+        }
+
+    }
+
+    private void BackList()
+    {
+        navManeger.NavigateTo("/authors/");
+    }
+}

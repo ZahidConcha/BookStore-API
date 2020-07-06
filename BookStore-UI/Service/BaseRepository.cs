@@ -1,4 +1,5 @@
-﻿using BookStore_UI.Contract;
+﻿using Blazored.LocalStorage;
+using BookStore_UI.Contract;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -6,6 +7,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -14,13 +16,15 @@ namespace BookStore_UI.Service
     public class BaseRepository<T> : IBaseRepository<T> where T : class
     {
         private readonly IHttpClientFactory client;
+        private readonly ILocalStorageService localStorage;
 
-        public BaseRepository(IHttpClientFactory _client)
+        public BaseRepository(IHttpClientFactory _client, ILocalStorageService _localStorage)
         {
             client = _client;
+            localStorage = _localStorage;
         }
 
-        
+
         public async Task<bool> Create(string url, T obj)
         {
             var request = new HttpRequestMessage(HttpMethod.Post, url);
@@ -29,11 +33,13 @@ namespace BookStore_UI.Service
                 return false;
             }
 
-            request.Content = new StringContent(JsonConvert.SerializeObject(obj));
+            request.Content = new StringContent(JsonConvert.SerializeObject(obj), Encoding.UTF8, "application/json");
 
             var cliente = client.CreateClient();
+            cliente.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", await GetBearerToken());
             HttpResponseMessage response = await cliente.SendAsync(request);
-            if (response.StatusCode == HttpStatusCode.Created) {
+            if (response.StatusCode == HttpStatusCode.Created)
+            {
                 return true;
             }
 
@@ -45,9 +51,10 @@ namespace BookStore_UI.Service
             if (id < 1)
                 return false;
 
-             var request = new HttpRequestMessage(HttpMethod.Delete, url + id);
+            var request = new HttpRequestMessage(HttpMethod.Delete, url + id);
 
             var cliente = client.CreateClient();
+            cliente.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", await GetBearerToken());
             HttpResponseMessage response = await cliente.SendAsync(request);
             if (response.StatusCode == HttpStatusCode.NoContent)
             {
@@ -66,6 +73,7 @@ namespace BookStore_UI.Service
             var request = new HttpRequestMessage(HttpMethod.Get, url + id);
 
             var cliente = client.CreateClient();
+            cliente.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", await GetBearerToken());
             HttpResponseMessage response = await cliente.SendAsync(request);
             if (response.StatusCode == HttpStatusCode.OK)
             {
@@ -79,10 +87,11 @@ namespace BookStore_UI.Service
 
         public async Task<IList<T>> Get(string url)
         {
-           
+
             var request = new HttpRequestMessage(HttpMethod.Get, url);
 
             var cliente = client.CreateClient();
+            cliente.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", await GetBearerToken());
             HttpResponseMessage response = await cliente.SendAsync(request);
             if (response.StatusCode == HttpStatusCode.OK)
             {
@@ -94,22 +103,28 @@ namespace BookStore_UI.Service
 
         }
 
-        public async Task<bool> Update(string url, T obj)
+        public async Task<bool> Update(string url, T obj, int id)
         {
-            var request = new HttpRequestMessage(HttpMethod.Put, url);
+            var request = new HttpRequestMessage(HttpMethod.Put, url + id);
             if (obj == null)
                 return false;
 
-            request.Content = new StringContent(JsonConvert.SerializeObject(obj),Encoding.UTF8,"application/json");
+            request.Content = new StringContent(JsonConvert.SerializeObject(obj), Encoding.UTF8, "application/json");
 
             var cliente = client.CreateClient();
+            cliente.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", await GetBearerToken());
             HttpResponseMessage response = await cliente.SendAsync(request);
-            if (response.StatusCode == HttpStatusCode.Created)
+            if (response.StatusCode == HttpStatusCode.NoContent)
             {
                 return true;
             }
 
             return false;
+        }
+
+        private async Task<string> GetBearerToken()
+        {
+            return await localStorage.GetItemAsync<string>("authToken");
         }
     }
 }

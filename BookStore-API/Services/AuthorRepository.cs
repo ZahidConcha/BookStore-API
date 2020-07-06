@@ -22,7 +22,7 @@ namespace BookStore_API.Services
 
         public async Task<IList<Author>> FindAll()
         {
-            var authors = await Context.Authors.ToListAsync();
+            var authors = await Context.Authors.Include(q=> q.ListBooks).ToListAsync();
             return authors;
         }
 
@@ -37,9 +37,9 @@ namespace BookStore_API.Services
 
 
 
-        public async Task<Author> FindById(int Id)
+        public async Task<Author> FindById(int id)
         {
-            var author = await Context.Authors.FindAsync(Id);
+            var author = await Context.Authors.Include(q => q.ListBooks).FirstOrDefaultAsync(q=> q.Id==id);
             return author;
         }
 
