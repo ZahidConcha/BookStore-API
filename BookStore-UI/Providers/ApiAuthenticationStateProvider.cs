@@ -43,7 +43,7 @@ namespace BookStore_UI.Providers
                 //return authanticated person
                 return new AuthenticationState(user);
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
             }

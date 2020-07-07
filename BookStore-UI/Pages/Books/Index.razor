@@ -1,0 +1,70 @@
+﻿@page "/books/"
+@attribute [Authorize]
+@inject IBookRepository bookRepository
+@inject NavigationManager navManeger
+
+
+
+@if (Model == null)
+{
+    <LodingMessage Message="Loding Books"></LodingMessage>
+}
+else
+{
+    <a href="/books/create" class="btn btn-primary"> <span class="oi oi-plus"> </span>  Create new Book</a>
+    <br />
+
+    @if (Model.Count < 1)
+    {
+        <LodingMessage Message="No books for now!"></LodingMessage>
+    }
+    else
+    {
+        <table class="table table-responsive">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Title</th>
+                    <th>Price</th>
+                    <th>Author</th>
+                    <th></th>
+
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var book in Model)
+                {
+                <tr>
+                    <td><img src="Uploads/@book.Image" style="height:50px; width:50px;" alt="Alternate Text" /></td>
+                    <td>@book.Title</td>
+                    <td>@book.Price</td>
+                    @if (true)
+                    {
+
+                    }
+                    <td>@book.Author.Fistname @book.Author.Lastname</td>
+                    <td>
+                        <a href="/books/view/@book.Id" class="btn btn-primary"><span class="oi oi-book"></span></a>
+                        <AuthorizeView Roles="Administrator">
+                            <a href="/books/edit/@book.Id" class="btn btn-warning"><span class="oi oi-pencil"></span></a>
+                            <a href="/books/delete/@book.Id" class="btn btn-danger"><span class="oi oi-delete"></span></a>
+                        </AuthorizeView>
+
+
+                    </td>
+                </tr>
+                }
+            </tbody>
+        </table>
+    }
+}
+
+@code {
+    private IList<Book> Model;
+
+    protected async override Task OnInitializedAsync()
+    {
+        Model = await bookRepository.Get(EndPoints.BooksEndPoint);
+    }
+
+}

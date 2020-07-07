@@ -1,0 +1,140 @@
+﻿@page "/books/create"
+@attribute [Authorize (Roles ="Administrator")]
+@inject NavigationManager navManeger
+@inject IBookRepository bookRepo    
+@inject  IAuthorRepository authorRepo
+@inject IFileUpload fileUpload
+
+
+
+@if (!isSucces)
+{
+    <ErrorMessage message="Something went wrong!"></ErrorMessage>
+}
+
+<EditForm Model="Model" OnValidSubmit="HandleCreate">
+    <DataAnnotationsValidator></DataAnnotationsValidator>
+    <ValidationSummary></ValidationSummary>
+    <div class=" form-group">
+        <lable for="title">Book Title</lable>
+        <InputText @bind-Value="Model.Title" class="form-control" id="title"></InputText>
+    </div>
+    <div class=" form-group">
+        <lable for="Isbm">ISBM</lable>
+        <InputText @bind-Value="Model.Isbn" class="form-control" id="Isbm"></InputText>
+    </div>
+    <div class=" form-group">
+        <lable for="price">Price</lable>
+        <InputNumber @bind-Value="Model.Price" class="form-control" id="price"></InputNumber>
+    </div>
+    <div class=" form-group">
+        <lable for="bio">Biography</lable>
+        <InputTextArea @bind-Value="Model.Summary" class="form-control" id="bio"></InputTextArea>
+    </div>
+    <div class=" form-group">
+        <lable for="author">Author</lable>
+        <select @bind="Model.AuthorId" class="form-control" id="author">
+            <option value="">----Select Author-----</option>
+            @if (AuthorsList != null)
+            {
+                foreach (var author in AuthorsList)
+                {
+                    <option value="@author.Id">@author.Fistname @author.Lastname</option>
+                }
+            }
+        </select>
+    </div>
+
+    <div class=" form-group">
+        <lable for="bookcover">Book Cover Photo</lable>
+        <InputFile OnChange="HandleFileSeleccion"></InputFile>
+        @if (isInvalidFileType)
+        {
+            <ErrorMessage message="Invlaid file type"></ErrorMessage>
+        }
+        @if (imgeDataUrl != null)
+        {
+            <img src="@imgeDataUrl" style="height:100px; width:100px;" />
+        }
+
+    </div>
+    <button class="btn btn-primary" type="submit">Create Book</button>
+
+</EditForm>
+
+
+
+@code {
+    private Book Model = new Book();
+    private IList<Author> AuthorsList;
+    private IFileListEntry file;
+    private string imgeDataUrl;
+    private bool isInvalidFileType = false;
+    private bool isSucces = true;
+    private System.IO.MemoryStream mStream;
+
+
+    protected async override Task OnInitializedAsync()
+    {
+        AuthorsList = await authorRepo.Get(EndPoints.AuthorsEndPoint);
+    }
+
+    private async Task HandleCreate()
+    {
+        if (!isInvalidFileType)
+        {
+            if (file != null)
+            {
+                var ext = System.IO.Path.GetExtension(file.Name);
+                var picId = Guid.NewGuid().ToString().Replace("-", "");
+                var picName = $"{picId}{ext}";
+                fileUpload.UploadFile(file, mStream, picName);
+                Model.Image = picName;
+            }
+
+            isSucces = await bookRepo.Create(EndPoints.BooksEndPoint, Model);
+            if (isSucces)
+            {
+                BackList();
+            }
+        }
+    }
+
+    private async Task HandleFileSeleccion(IFileListEntry[] files)
+    {
+        file =  files.FirstOrDefault();
+        if (file != null)
+        {
+            var name = file.Name;
+            if (name.Contains("jpg") || name.Contains("png") || name.Contains("jpeg"))
+            {
+                mStream = new System.IO.MemoryStream();
+                await file.Data.CopyToAsync(mStream);
+
+                var reader = new System.IO.StreamReader(file.Data);
+                var imageBase64Data = Convert.ToBase64String(mStream.ToArray());
+                imgeDataUrl = string.Format("data:image/png;base64,{0}", imageBase64Data);
+                isInvalidFileType = false;
+            }
+            else
+            {
+                isInvalidFileType = true;
+                imgeDataUrl = string.Empty;
+            }
+        }
+        else
+        {
+            isInvalidFileType = false;
+        }
+    }
+
+
+
+
+    private void BackList()
+    {
+        navManeger.NavigateTo("/books/");
+    }
+
+
+}

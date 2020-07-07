@@ -38,14 +38,14 @@ namespace BookStore_API.Services
 
         public async Task<IList<Book>> FindAll()
         {
-            var books = await Context.Books.ToListAsync();
+            var books = await Context.Books.Include(q=>q.Author).ToListAsync();
             return books;
             
         }
 
-        public async Task<Book> FindById(int Id)
+        public async Task<Book> FindById(int id)
         {
-            var book = await Context.Books.FindAsync(Id);
+            var book = await Context.Books.Include(q => q.Author).FirstOrDefaultAsync(q=> q.Id == id);
             return book;
         }
         public async Task<bool> Save()

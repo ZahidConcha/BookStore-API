@@ -1,0 +1,162 @@
+﻿@page "/books/edit/{Id}"
+@attribute [Authorize(Roles = "Administrator")]
+@inject IBookRepository bookRepo
+@inject IAuthorRepository authorRepo
+@inject IFileUpload fileUpRepo
+@inject NavigationManager navManeger
+
+
+@if (int.Parse(Id) < 1 || string.IsNullOrWhiteSpace(Id))
+{
+    <ErrorMessage Message="No Data to view"></ErrorMessage>
+}
+else if (Model == null)
+{
+    <LodingMessage Message=" Loding Details"></LodingMessage>
+}
+else
+{
+    <EditForm Model="Model" OnValidSubmit="HandleUpdate">
+        <DataAnnotationsValidator></DataAnnotationsValidator>
+        <ValidationSummary></ValidationSummary>
+        <div class=" form-group">
+            <lable for="title">Book Title</lable>
+            <InputText @bind-Value="Model.Title" class="form-control" id="title"></InputText>
+        </div>
+        <div class=" form-group">
+            <lable for="Isbm">ISBM</lable>
+            <InputText @bind-Value="Model.Isbn" class="form-control" id="Isbm"></InputText>
+        </div>
+        <div class=" form-group">
+            <lable for="price">Price</lable>
+            <InputNumber @bind-Value="Model.Price" class="form-control" id="price"></InputNumber>
+        </div>
+        <div class=" form-group">
+            <lable for="bio">Biography</lable>
+            <InputTextArea @bind-Value="Model.Summary" class="form-control" id="bio"></InputTextArea>
+        </div>
+        <div class=" form-group">
+            <lable for="author">Author</lable>
+            <select @bind="Model.AuthorId" class="form-control" id="author">
+                <option value="">----Select Author-----</option>
+                @if (AuthorsList != null)
+                {
+                    foreach (var author in AuthorsList)
+                    {
+                        <option value="@author.Id">@author.Fistname @author.Lastname</option>
+                    }
+                }
+            </select>
+        </div>
+
+        <div class=" form-group">
+            <lable for="bookcover">Book Cover Photo</lable>
+            <InputFile OnChange="HandleFileSeleccion"></InputFile>
+            @if (isInvalidFileType)
+            {
+                <ErrorMessage message="Invlaid file type"></ErrorMessage>
+            }
+            @if (!string.IsNullOrWhiteSpace(imgeDataUrl))
+            {
+                <img src="@imgeDataUrl" style="height:100px; width:100px;" />
+            }
+            else if (!string.IsNullOrWhiteSpace(Model.Image))
+            {
+                <img src="/Uploads/@Model.Image" style="height:100px; width:100px;" />
+            }
+
+        </div>
+        <button class="btn btn-primary" type="submit">Submint Changes</button>
+
+    </EditForm>
+}
+
+@code {
+    [Parameter] public string Id { get; set; }
+    private Book Model = new Book();
+
+    private IList<Author> AuthorsList;
+    private IFileListEntry file;
+    private string imgeDataUrl;
+    private bool isInvalidFileType = false;
+    private bool isSucces = true;
+    private System.IO.MemoryStream mStream;
+    private bool isFileChanged = false;
+
+    protected async override Task OnInitializedAsync()
+    {
+        int id = Convert.ToInt32(Id);
+        Model = await bookRepo.Get(EndPoints.BooksEndPoint, id);
+        AuthorsList = await authorRepo.Get(EndPoints.AuthorsEndPoint);
+    }
+
+    private async Task HandleUpdate()
+    {
+        if (!isInvalidFileType)
+        {
+            if (file != null)
+            {
+                var ext = System.IO.Path.GetExtension(file.Name);
+                var picId = Guid.NewGuid().ToString().Replace("-", "");
+                var picName = $"{picId}{ext}";
+                //remove old picture and repalce with new one
+
+                fileUpRepo.RemoveFile(Model.Image);
+                fileUpRepo.UploadFile(file, mStream, picName);
+                Model.Image = picName;
+            }
+            else if (isFileChanged && file==null)
+            {
+                //remove old picture and repalce with Nothing
+                fileUpRepo.RemoveFile(Model.Image);
+                Model.Image = string.Empty;
+            }
+
+            int id = Convert.ToInt32(Id);
+            isSucces = await bookRepo.Update(EndPoints.BooksEndPoint, Model,id);
+            if (isSucces)
+            {
+                BackList();
+            }
+        }
+    }
+
+
+    private async Task HandleFileSeleccion(IFileListEntry[] files)
+    {
+        file = files.FirstOrDefault();
+        isFileChanged =true;
+        if (file != null)
+        {
+            var name = file.Name;
+            if (name.Contains("jpg") || name.Contains("png") || name.Contains("jpeg"))
+            {
+                mStream = new System.IO.MemoryStream();
+                await file.Data.CopyToAsync(mStream);
+
+                var reader = new System.IO.StreamReader(file.Data);
+                var imageBase64Data = Convert.ToBase64String(mStream.ToArray());
+                imgeDataUrl = string.Format("data:image/png;base64,{0}", imageBase64Data);
+                isInvalidFileType = false;
+            }
+            else
+            {
+                isInvalidFileType = true;
+                imgeDataUrl = string.Empty;
+            }
+        }
+        else
+        {
+            isInvalidFileType = false;
+        }
+    }
+
+
+
+
+    private void BackList()
+    {
+        navManeger.NavigateTo("/books/");
+    }
+
+}
